@@ -23,19 +23,7 @@ function weatherReader(options) {
     this.sunrise = null;
     this.sunset = null;
     this.error = null;
-
     
-    (function startup() {
-        /*
-        if (typeof options.provider === 'undefined') { options.provider = 'darksky'; }
-        if (options.provider === 'darksky' &&
-            (typeof options.lat !== number || typeof options.long !== number)) {
-
-            }
-        */
-    })();
-    
-
     /******* PUBLIC FUNCTIONS *******************************************/
 
     /**
