@@ -7,7 +7,7 @@ Originally designed to use WeatherUnderground but they seem to have removed publ
 
 ### Sample use in Node.js:
 ```
-var Weather = require('./weather').weatherReader;
+var Weather = require('./weather').weather;
 
 var weather = new Weather({
     provider: 'darksky',

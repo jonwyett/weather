@@ -1,15 +1,15 @@
 /**
- * Creates a weatherReader for various online weather APIs
+ * Creates a service for various online weather APIs
  * 
  * @param {Object} options
  * @param {String} options.key - API Key
  * @param {'darksky'} options.provider - The weather provider to use
  * @param {Number} options.latitude - The latitude (darksky)
- * @param {number} options.longitude - the longitude (darksky)
+ * @param {Number} options.longitude - the longitude (darksky)
  * 
- * @return {undefined}
+ * @param {Function} [callback]
  */
-function weatherReader(options) {
+function service(options, callback) {
     var _self = this;
 
     // weather information
@@ -23,6 +23,19 @@ function weatherReader(options) {
     this.sunrise = null;
     this.sunset = null;
     this.error = null;
+
+    (function startup() {
+        if (options.provider === 'darksky') {
+            var err = null;
+        if (typeof options.key !== 'string' ||
+            typeof options.latitude !== 'number' ||
+            typeof options.longitude !== 'number') {
+                err = 'Invalid startup options.';
+            }
+
+            if (typeof callback === 'function') { callback(err); }
+        }
+    })();
     
     /******* PUBLIC FUNCTIONS *******************************************/
 
@@ -37,6 +50,7 @@ function weatherReader(options) {
             url = 'https://api.darksky.net/forecast/[KEY]/[LAT],[LONG]?exclude=["minutely","flags","alerts"]';
         }
         url = url.replace('[KEY]',options.key)
+                // @ts-ignore
                 .replace('[LAT]', options.latitude)
                 .replace('[LONG]', options.longitude);
         try {
@@ -103,4 +117,4 @@ function weatherReader(options) {
     }
 }
 
-exports.weatherReader = weatherReader;
+exports.service = service;
