@@ -7,9 +7,9 @@ Originally designed to use WeatherUnderground but they seem to have removed publ
 
 ### Sample use in Node.js:
 ```
-var Weather = require('./weather').weather;
+var Weather = require('./weather');
 
-var weather = new Weather({
+var weather = new Weather.service({
     provider: 'darksky',
     key: '0123456789abcdef9876543210fedcba', //this is a fake key
     latitude: 42.3601,
