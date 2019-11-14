@@ -1,3 +1,8 @@
+/*
+ver 1.0.2
+    -includes celsius option    
+*/
+
 /**
  * Creates a service for various online weather APIs
  * 
@@ -6,6 +11,7 @@
  * @param {'darksky'} options.provider - The weather provider to use
  * @param {Number} options.latitude - The latitude (darksky)
  * @param {Number} options.longitude - the longitude (darksky)
+ * @param {boolean} options.celsius - Temperature in celsius
  * 
  * @param {Function} [callback]
  */
@@ -107,6 +113,15 @@ function service(options, callback) {
                 _self.forecastTime = new Date(weather.currently.time * 1000);
                 _self.sunrise = new Date(weather.daily.data[0].sunriseTime * 1000);
                 _self.sunset = new Date(weather.daily.data[0].sunsetTime * 1000);
+
+                //set celsius if desired
+                if (options.celsius) {
+                    _self.temp = (_self.temp-32)*(5/9);
+                    _self.temp = _self.temp.toFixed(2); //round to 2 decimal places
+
+                    _self.feelsLike = (_self.feelsLike-32)*(5/9);
+                    _self.feelsLike = _self.feelsLike.toFixed(2);
+                }
 
                 if (typeof callback === 'function') { callback(null); } 
             }

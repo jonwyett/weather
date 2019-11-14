@@ -1,15 +1,17 @@
 # weather
-Module for reading weather data from various public APIs
+Module for reading weather data from various public APIs.
 
 Currently only supports DarkSky, but AccuWeather is planned.
 
-Originally designed to use WeatherUnderground but they seem to have removed public access to their API
+Originally designed to use WeatherUnderground but they seem to have removed public access to their API.
+
+The goal is to create a weather module that returns a standardized weather object regardless of the API used.
 
 ### Sample use in Node.js:
 ```
-var Weather = require('jw-weather');
+var jw-weather = require('jw-weather');
 
-var weather = new Weather.service({
+var weather = new jw-weather.service({
     provider: 'darksky',
     key: '0123456789abcdef9876543210fedcba', //this is a fake key
     latitude: 42.3601,
@@ -24,4 +26,15 @@ weather.update(function(err) {
     }     
 });
 ```
+
+The weather object currently includes:
+
+- lastUpdate
+- temp
+- feelsLike
+- humidity
+- currentCondition
+- sunrise
+- sunset
+- forecastTime
 
