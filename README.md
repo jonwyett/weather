@@ -2,8 +2,8 @@
 Module for reading weather data from various public APIs.
 
 Currently supports:
-- #### DarkSky 
-- #### AccuWeather.
+- **DarkSky**
+- **AccuWeather**
 
 The goal is to create a weather module that returns a standardized weather object regardless of the API used.
 
