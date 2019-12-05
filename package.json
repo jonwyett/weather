@@ -1,6 +1,6 @@
 {
   "name": "jw-weather",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Reader for various weather APIs",
   "main": "weather.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/jonwyett/weather.git"
   },
   "keywords": [
-    "weather"
+    "weather", "DarkSky","AccuWeather"
   ],
   "author": "Jonathan Wyett",
   "license": "ISC",
