@@ -30,13 +30,15 @@ boston.update(function(err) {
 The weather object currently includes:
 
 - lastUpdate (When the update was run locally)
-- forecastTime (The actual forecast time for the the provider)
+- forecastTime (The actual forecast time from the the provider)
 - temp
 - feelsLike
 - humidity
 - currentCondition
+- An icon name/number
 - sunrise (DarkSky only)
 - sunset (DarkSky only)
+- A 5-day forecast (DarkSky only)
 
 When using AccuWeather there is a helper function for looking up location keys since AccuWeather does not use latitude/longitude in it's API call.
 Review demo.js for example use.

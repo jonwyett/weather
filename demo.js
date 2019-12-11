@@ -5,6 +5,7 @@ var Weather = require('./weather');
  * Simply create the weather service and then run the update function
 */
 var DarkSky_Key = '0123456789abcdef9876543210fedcba'; //this is a fake key
+
 var boston = new Weather.service({
     provider: 'darksky',
     key: DarkSky_Key,
@@ -17,7 +18,7 @@ boston.update(function(err) {
     if (err) {
         console.log('ERROR: ' + err);
     } else {
-        console.log('\r\n---Boston Weather---');
+        console.log('\r\n---Boston Weather (DarkSky)---');
         printWeather(boston);
     }
 });
@@ -36,6 +37,7 @@ boston.update(function(err) {
  */
 
 var AccuWeather_Key = '0123456789abcdef9876543210fedcba'; //this is a fake key
+
 var AccuWeather_Houston; //create a reference outside the callback
 
 //run the lookup
@@ -60,7 +62,7 @@ Weather.accuweatherLocationLookup({
                 if (err) {
                     console.log('ERROR: ' + err);
                 } else {
-                    console.log('---Houston Weather---');
+                    console.log('---Houston Weather (AccuWeather)---');
                     printWeather(AccuWeather_Houston);
                 }
             });  

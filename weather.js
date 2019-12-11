@@ -9,10 +9,10 @@ ver 1.0.2
  * @param {Object} options
  * @param {String} options.key - API Key
  * @param {'darksky'|'accuweather'} options.provider - The weather provider to use
- * @param {Number} options.latitude - The latitude (Darksky)
- * @param {Number} options.longitude - the longitude (Darksky)
- * @param {String} options.locationKey - the location key (Accuweather)
- * @param {boolean} options.celsius - Temperature in celsius
+ * @param {Number} [options.latitude] - The latitude (Darksky)
+ * @param {Number} [options.longitude] - the longitude (Darksky)
+ * @param {String} [options.locationKey] - the location key (Accuweather)
+ * @param {boolean} [options.celsius] - Temperature in celsius
  * 
  * @param {Function} [callback]
  */
@@ -26,10 +26,12 @@ function service(options, callback) {
     this.temp = null;
     this.humidity = null;
     this.currentCondition = null;
+    this.icon = null;
     this.feelsLike = null;
     this.sunrise = null;
     this.sunset = null;
     this.error = null;
+    this.forecast = [];
 
     (function startup() {
         var err = null;
@@ -99,7 +101,9 @@ function service(options, callback) {
             feelsLike: _self.feelsLike,
             sunrise: _self.sunrise,
             sunset: _self.sunset,
-            forecastTime: _self.forecastTime
+            forecastTime: _self.forecastTime,
+            forecast: _self.forecast,
+            icon: _self.icon
         };
 
         return weather;
@@ -123,14 +127,34 @@ function service(options, callback) {
                 _self.forecastTime = new Date(weather.currently.time * 1000);
                 _self.sunrise = new Date(weather.daily.data[0].sunriseTime * 1000);
                 _self.sunset = new Date(weather.daily.data[0].sunsetTime * 1000);
+                _self.icon = weather.currently.icon;
 
                 //set celsius if desired
                 if (options.celsius) {
-                    _self.temp = (_self.temp-32)*(5/9);
-                    _self.temp = _self.temp.toFixed(2); //round to 2 decimal places
+                    _self.temp = toCelsius(_self.temp);
+                    _self.feelsLike = toCelsius(_self.feelsLike);
+                }
 
-                    _self.feelsLike = (_self.feelsLike-32)*(5/9);
-                    _self.feelsLike = _self.feelsLike.toFixed(2);
+                //create the forecast
+
+                for (var i=0; i<5; i++) {
+                    var day = getDailyObject();
+                    day.condition = weather.daily.data[i].summary;
+                    day.feelsLikeHigh = weather.daily.data[i].apparentTemperatureHigh.toFixed(2);
+                    day.feelsLikeLow = weather.daily.data[i].apparentTemperatureLow.toFixed(2);
+                    day.humidity = weather.daily.data[i].humidity;
+                    day.icon = weather.daily.data[i].icon;
+                    day.sunrise = new Date(weather.daily.data[i].sunriseTime * 1000);
+                    day.sunset = new Date(weather.daily.data[i].sunsetTime * 1000);
+                    day.tempHigh = weather.daily.data[i].temperatureHigh.toFixed(2);
+                    day.tempLow = weather.daily.data[i].temperatureLow.toFixed(2);
+                    if (options.celsius) {
+                        day.feelsLikeHigh = toCelsius(day.feelsLikeHigh);
+                        day.feelsLikeLow = toCelsius(day.feelsLikeLow);
+                        day.tempHigh = toCelsius(day.tempHigh);
+                        day.tempLow = toCelsius(day.tempLow);
+                    }
+                    _self.forecast.push(day);
                 }
 
                 if (typeof callback === 'function') { callback(null); } 
@@ -156,14 +180,12 @@ function service(options, callback) {
             _self.forecastTime = new Date(weather.LocalObservationDateTime);
             _self.sunrise = null;
             _self.sunset = null;
+            _self.icon = weather.WeatherIcon;
 
             //set celsius if desired
             if (options.celsius) {
-                _self.temp = (_self.temp-32)*(5/9);
-                _self.temp = _self.temp.toFixed(2); //round to 2 decimal places
-
-                _self.feelsLike = (_self.feelsLike-32)*(5/9);
-                _self.feelsLike = _self.feelsLike.toFixed(2);
+                _self.temp = toCelsius(_self.temp);
+                _self.feelsLike = toCelsius(_self.feelsLike);
             }
 
             if (typeof callback === 'function') { callback(null); } 
@@ -181,10 +203,9 @@ function service(options, callback) {
  * 
  * @param {object} options 
  * @param {String} options.key - API Key
- * @param {number} options.latitude - The latitude 
- * @param {number} options.longitude - the longitude 
- * @param {string} options.zipcode - the zipcode
- * @param {boolean} options.celsius - Temperature in celsius
+ * @param {number|string} [options.latitude] - The latitude 
+ * @param {number|string} [options.longitude] - the longitude 
+ * @param {number|string} [options.zipcode] - the zipcode
  * @param {function} callback 
  */
 function accuweatherLocationLookup(options, callback) {
@@ -241,6 +262,26 @@ function accuweatherLocationLookup(options, callback) {
     }
 }
 
+
+function toCelsius(temp) {
+    return ((temp-32)*(5/9)).toFixed(2);       
+}
+
+function getDailyObject() {
+    var daily = {
+        tempHigh: null,
+        tempLow: null,
+        humidity: null,
+        condition: null,
+        feelsLikeHigh: null,
+        feelsLikeLow: null,
+        sunrise: null,
+        sunset: null,
+        icon: null
+    };
+
+    return daily;
+}
 
 exports.service = service;
 exports.accuweatherLocationLookup = accuweatherLocationLookup;
