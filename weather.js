@@ -9,14 +9,12 @@ ver 1.0.2
  * @param {Object} options
  * @param {String} options.key - API Key
  * @param {'darksky'|'accuweather'} options.provider - The weather provider to use
- * @param {Number} [options.latitude] - The latitude (Darksky)
- * @param {Number} [options.longitude] - the longitude (Darksky)
- * @param {String} [options.locationKey] - the location key (Accuweather)
+ * @param {Number} [options.latitude] - The latitude 
+ * @param {Number} [options.longitude] - the longitude 
  * @param {boolean} [options.celsius] - Temperature in celsius
  * 
- * @param {Function} [callback]
  */
-function service(options, callback) {
+function service(options) {
     var _self = this;
 
     // weather information
@@ -32,22 +30,61 @@ function service(options, callback) {
     this.sunset = null;
     this.error = null;
     this.forecast = [];
+    
+    this.ready = false; //this is for weather services that need to do lookups
+    this.runUpdateWhenReady = false; //this is in case the user requests an update before the weather object is ready
+    this.updateWhenReadyFunc = null; //will hold the callback for the early update request
+
+    this.locationKey = null; //this is for accuweather
+
+    /*******************   Custom Emitter Code  **************************************************/
+    //this is for future browser compatibility
+    var _events = {};
+    this.on = function(event, callback) {
+        //attaches a callback function to an event
+        _events[event] = callback;    
+    };
+    function emit(event, msg) {
+        if (typeof _events[event] === 'function') { //the client has registered the event
+            _events[event](msg); //run the event function provided            
+        }   
+    }
+    /*******************************************************************************************/
+
 
     (function startup() {
-        var err = null;
-        if (options.provider == 'darksky') {
-            if (typeof options.key !== 'string' ||
-                typeof options.latitude !== 'number' ||
-                typeof options.longitude !== 'number') {
-                    err = 'Invalid startup options.';
-            }
-        } else if (options.provider == 'accuweather') {
-            if (typeof options.key !== 'string' || typeof options.locationKey === 'undefined') {
-                err = 'Invalid startup options.';
-            }
+        if (typeof options.key !== 'string' ||
+            typeof options.latitude !== 'number' ||
+            typeof options.longitude !== 'number') {
+                setTimeout(function() {
+                    emit('error', 'Invalid startup options.'); 
+                }, 100);           
         }
+        
+        // TODO: Actually test that darksky is working before ready? Maybe just ping the service?
+        if (options.provider == 'darksky') {
+            
+            _self.ready = true;
+            if (_self.runUpdateWhenReady) {
+                _self.update(_self.updateWhenReadyFunc);
+            }
+            setTimeout(function() {
+                emit('ready', null);
+            }, 100);
+            
 
-        if (typeof callback === 'function') { callback(err); }
+        } else if (options.provider == 'accuweather') {
+            accuweatherLocationLookup(options, function(err, locationKey) {
+                _self.locationKey = locationKey;
+                _self.ready = true;
+                if (_self.runUpdateWhenReady) {
+                    _self.update(_self.updateWhenReadyFunc);
+                }
+                setTimeout(function() {
+                    emit('ready', null);
+                }, 100);
+            });       
+        }
     })();
     
     /******* PUBLIC FUNCTIONS *******************************************/
@@ -57,42 +94,82 @@ function service(options, callback) {
      * @param {Function} [callback]
      */
     this.update = function(callback) {
-        var https = require('https');
-        var url = '';
-        if (options.provider == 'darksky') { //case insensitive
-            url = 'https://api.darksky.net/forecast/[KEY]/[LAT],[LONG]?exclude=["minutely","flags","alerts"]';
-        } else if (options.provider == 'accuweather') { //case insensitive
-            url = 'https://dataservice.accuweather.com/currentconditions/v1/[LOCATION]?apikey=[KEY]&details=true';
+        if (_self.ready) {
+            if (options.provider == 'darksky') { //case insensitive
+                getDarkSkyData(callback);
+            } else if (options.provider == 'accuweather') { //case insensitive
+                getAccuWeatherData(callback);
+            }
+        } else {
+            _self.runUpdateWhenReady = true;
+            _self.updateWhenReadyFunc = callback;
         }
-        url = url.replace('[KEY]',options.key)
-                .replace('[LAT]', options.latitude)
-                .replace('[LONG]', options.longitude)
-                .replace('[LOCATION]', options.locationKey);
-        
-       try {
-        https.get(url, function(res){
-            var body = '';
-            res.on('data', function(chunk){ body += chunk; });
-            res.on('end', function(){
-                try {
-                    if (options.provider == 'darksky'){ parseDarkSky(body, callback); }   
-                    else if (options.provider == 'accuweather'){ parseAccuweather(body, callback); }   
-                } catch (err) {
-                    if (typeof callback === 'function') { callback(err); }
-                }
-            });
-        }).on('error', function(err) { if (typeof callback === 'function') { callback(err); } });
-        } catch (err) {
-            if (typeof callback === 'function') { callback(err); }    
-        }
-
     };
+
+    function getDarkSkyData(callback) {
+        var url = 'https://api.darksky.net/forecast/[KEY]/[LAT],[LONG]?exclude=["minutely","flags","alerts"]';
+        url = url.replace('[KEY]',options.key)
+                    .replace('[LAT]', options.latitude.toString())
+                    .replace('[LONG]', options.longitude.toString());
+        getAPIData(url, function(err, weather) {
+            if (err) {
+                callback(err);
+            } else {
+                parseDarkSky(weather, callback);      
+            }
+        });
+    }
+
+    function getAccuWeatherData(callback) {
+        var url = '';
+        //accuweather needs multiple calls, so we'll store them in an object
+        var accuWeatherData = {
+            CurrentConditions : {},
+            Forecast: {}
+        };
+
+        getAccuWeatherCurrentConditions(accuWeatherData, function(accuWeatherData) {
+            getAccuWeatherForecast(accuWeatherData, function(accuWeatherData) {
+                parseAccuweather(accuWeatherData, callback); 
+            });
+               
+        });
+        
+    }
+
+    function getAccuWeatherCurrentConditions(accuWeatherData, callback) {
+        url = 'https://dataservice.accuweather.com/currentconditions/v1/[LOCATION]?apikey=[KEY]&details=true';
+        url = url.replace('[KEY]',options.key)
+                .replace('[LOCATION]', _self.locationKey);
+        getAPIData(url, function(err, weather) {
+            if (err) {
+                callback(err);
+            } else {
+                accuWeatherData.CurrentConditions = weather;
+                callback(accuWeatherData);      
+            }
+        });
+    }
+
+    function getAccuWeatherForecast(accuWeatherData, callback) {
+        url = 'https://dataservice.accuweather.com/forecasts/v1/daily/5day/[LOCATION]?apikey=[KEY]&details=true';
+        url = url.replace('[KEY]',options.key)
+                .replace('[LOCATION]', _self.locationKey);
+        getAPIData(url, function(err, weather) {
+            if (err) {
+                callback(err);
+            } else {
+                accuWeatherData.Forecast = weather;
+                callback(accuWeatherData);      
+            }
+        });
+    }
 
     /**
      * @returns {Object} - an object representing the top-level vars
      */
     this.fullWeather = function() {
-        console.log('returning full weather');
+        //console.log('returning full weather');
         var weather = {
             lastUpdate: _self.lastUpdate,
             temp: _self.temp,
@@ -111,11 +188,30 @@ function service(options, callback) {
 
     /******* END PUBLIC FUNCTIONS *******************************************/
 
+    function getAPIData(url, callback) {
+        var https = require('https');
+        try {
+            https.get(url, function(res){
+                var body = '';
+                res.on('data', function(chunk){ body += chunk; });
+                res.on('end', function(){
+                    try {
+                        body = JSON.parse(body);
+                        if (typeof callback === 'function') { callback(null, body); }
+                    } catch (err) {
+                        if (typeof callback === 'function') { callback(err); }
+                    }
+                });
+            }).on('error', function(err) { if (typeof callback === 'function') { callback(err); } });
+        } catch (err) {
+            if (typeof callback === 'function') { callback(err); }    
+        }
+    }
 
     function parseDarkSky(weather, callback) {
         _self.lastUpdate = new Date().toString();
         try {
-            weather = JSON.parse(weather);
+            //weather = JSON.parse(weather);
             if (weather.error) {
                 if (typeof callback === 'function') {callback(weather.error); }
             } else {
@@ -165,27 +261,49 @@ function service(options, callback) {
         }        
     }
 
-    function parseAccuweather(weather, callback) {
+    function parseAccuweather(accuWeatherData, callback) {
         _self.lastUpdate = new Date().toString();
+        _self.raw = accuWeatherData;
         try {
-            weather = JSON.parse(weather);
-            weather = weather[0]; //break it out of the array
+            var CurrentConditions = accuWeatherData.CurrentConditions[0]; //break it out of the array
+            var Forecast = accuWeatherData.Forecast;
 
-            _self.raw = weather;
-
-            _self.temp = weather.Temperature.Imperial.Value.toFixed(2);
-            _self.feelsLike = weather.RealFeelTemperature.Imperial.Value.toFixed(2);
-            _self.currentCondition = weather.WeatherText;
-            _self.humidity = (weather.RelativeHumidity/100).toFixed(2);
-            _self.forecastTime = new Date(weather.LocalObservationDateTime);
-            _self.sunrise = null;
-            _self.sunset = null;
-            _self.icon = weather.WeatherIcon;
+            _self.temp = CurrentConditions.Temperature.Imperial.Value.toFixed(2);
+            _self.feelsLike = CurrentConditions.RealFeelTemperature.Imperial.Value.toFixed(2);
+            _self.currentCondition = CurrentConditions.WeatherText;
+            _self.humidity = (CurrentConditions.RelativeHumidity/100).toFixed(2);
+            _self.forecastTime = new Date(CurrentConditions.LocalObservationDateTime);
+            _self.sunrise = new Date(Forecast.DailyForecasts[0].Sun.Rise);
+            _self.sunset = new Date(Forecast.DailyForecasts[0].Sun.Set);
+            _self.icon = CurrentConditions.WeatherIcon;
 
             //set celsius if desired
             if (options.celsius) {
                 _self.temp = toCelsius(_self.temp);
                 _self.feelsLike = toCelsius(_self.feelsLike);
+            }
+
+
+            //create the forecast
+
+            for (var i=0; i<5; i++) {
+                var day = getDailyObject();
+                day.condition = Forecast.DailyForecasts[i].Day.ShortPhrase;
+                day.feelsLikeHigh = Forecast.DailyForecasts[i].RealFeelTemperature.Maximum.Value.toFixed(2);
+                day.feelsLikeLow = Forecast.DailyForecasts[i].RealFeelTemperature.Minimum.Value.toFixed(2);
+                day.humidity = null;
+                day.icon = Forecast.DailyForecasts[i].Day.Icon;
+                day.sunrise = new Date(Forecast.DailyForecasts[i].Sun.Rise);
+                day.sunset = new Date(Forecast.DailyForecasts[i].Sun.Set);
+                day.tempHigh = Forecast.DailyForecasts[i].Temperature.Maximum.Value.toFixed(2);
+                day.tempLow = Forecast.DailyForecasts[i].Temperature.Minimum.Value.toFixed(2);
+                if (options.celsius) {
+                    day.feelsLikeHigh = toCelsius(day.feelsLikeHigh);
+                    day.feelsLikeLow = toCelsius(day.feelsLikeLow);
+                    day.tempHigh = toCelsius(day.tempHigh);
+                    day.tempLow = toCelsius(day.tempLow);
+                }
+                _self.forecast.push(day);
             }
 
             if (typeof callback === 'function') { callback(null); } 
@@ -196,7 +314,7 @@ function service(options, callback) {
         }    
 
     }
-}
+} ///END OF service object
 
 /**
  * Looks up the location key needed for Accuweather
@@ -205,7 +323,6 @@ function service(options, callback) {
  * @param {String} options.key - API Key
  * @param {number|string} [options.latitude] - The latitude 
  * @param {number|string} [options.longitude] - the longitude 
- * @param {number|string} [options.zipcode] - the zipcode
  * @param {function} callback 
  */
 function accuweatherLocationLookup(options, callback) {
@@ -221,11 +338,7 @@ function accuweatherLocationLookup(options, callback) {
     var https = require('https');
     var url = '';
     var mode = null;
-    if (options.zipcode) {
-        mode = 'zipcode';
-        url = 'https://dataservice.accuweather.com/locations/v1/postalcodes/search?apikey=[KEY]&q=[ZIPCODE]';
-    } else if (options.latitude && options.longitude) {
-        mode = 'lat/long';
+    if (options.latitude && options.longitude) {
         url = 'https://dataservice.accuweather.com/locations/v1/cities/geoposition/search?apikey=[KEY]&q=[LAT],[LONG]';
     } else {
         err = 'Invalid location information';
@@ -236,8 +349,7 @@ function accuweatherLocationLookup(options, callback) {
     
     url = url.replace('[KEY]',options.key)
             .replace('[LAT]', options.latitude)
-            .replace('[LONG]', options.longitude)
-            .replace('[ZIPCODE]', options.zipcode);
+            .replace('[LONG]', options.longitude);
     try {
         https.get(url, function(res){
             var body = '';
@@ -246,11 +358,7 @@ function accuweatherLocationLookup(options, callback) {
                 try {
                     var res = JSON.parse(body);
                     var locationKey = '';
-                    if (mode === 'zipcode') {
-                        locationKey = res[0].Key;
-                    } else if (mode === 'lat/long') {
-                        locationKey = res.Key;
-                    }
+                    locationKey = res.Key;
                     if (typeof callback === 'function') { callback(null, locationKey); }    
                 } catch (err) {
                     if (typeof callback === 'function') { callback(err); }
@@ -284,4 +392,3 @@ function getDailyObject() {
 }
 
 exports.service = service;
-exports.accuweatherLocationLookup = accuweatherLocationLookup;
