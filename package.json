@@ -1,6 +1,6 @@
 {
   "name": "jw-weather",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Reader for various weather APIs",
   "main": "weather.js",
   "scripts": {
@@ -11,12 +11,19 @@
     "url": "git+https://github.com/jonwyett/weather.git"
   },
   "keywords": [
-    "Weather", "DarkSky","AccuWeather","Forecast"
+    "Weather",
+    "DarkSky",
+    "AccuWeather",
+    "OpenWeatherMap",
+    "Forecast"
   ],
   "author": "Jonathan Wyett",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/jonwyett/weather/issues"
   },
-  "homepage": "https://github.com/jonwyett/weather#readme"
+  "homepage": "https://github.com/jonwyett/weather#readme",
+  "dependencies": {
+    "jw-gate": "^1.0.0"
+  }
 }

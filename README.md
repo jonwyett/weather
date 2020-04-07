@@ -2,11 +2,13 @@
 Module for reading weather data from various public APIs.
 
 Currently supports:
-- **DarkSky**
+- **DarkSky** (at least until Apple shuts it down...)
 - **AccuWeather**
+- **OpenWeatherMap**
+- ~~Weather UnderGround~~ *(API depriciated)*
 
 The goal is to create a weather module that returns a standardized weather object regardless of the API used. This serves a few purposes: 
-1. Being able to seamlessly transition to another service in case the API is depreciated. (Which is why this project was started).
+1. Being able to seamlessly transition to another service in case the API is depreciated. *Which is why this project was started, and is already happening again with the DarkSky API.* 
 2. Being able to switch to another service if costs or needs change.
 3. Being able to use more then one service simultaneously to increase the frequency that you are able to query the APIs since the providers limit allowed queries for a given license.
 
@@ -47,7 +49,7 @@ The weather object currently includes:
 
 ## Startup options:
 
-- provider: string, 'darksky' || 'accuweather'
+- provider: string, 'darksky' || 'accuweather' || 'openweathermap'
 - key: string, provided by weather service
 - latitude: number
 - longitude: number
