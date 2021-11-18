@@ -1,5 +1,8 @@
 /*
-
+ver 2.1.2
+    -minor bugfix
+ver 2.1.1
+    -remove hard-coded key to weatherbit
 ver 2.1.0
     -Add OpenWetherMap support
     -Add WeatherBit support
