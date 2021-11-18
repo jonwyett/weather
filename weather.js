@@ -188,7 +188,7 @@ function service(options) {
         } else if (options.provider === 'weatherbit') {
             weatherData = {
                 Forecast: 'https://api.weatherbit.io/v2.0/forecast/daily?lat=[LAT]&lon=[LONG]&days=5&units=I&key=[KEY]',
-                CurrentConditions: 'https://api.weatherbit.io/v2.0/current?lat=40.758556&lon=-73.765434&units=I&key=bd2295d6056e46a0adb4f2ff43569e03'
+                CurrentConditions: 'https://api.weatherbit.io/v2.0/current?lat=40.758556&lon=-73.765434&units=I&key=[KEY]'
             };
         }
 
@@ -245,6 +245,7 @@ function service(options) {
                 res.on('end', function(){
                     try {
                         body = JSON.parse(body);
+                        //console.log(body);
                         if (typeof callback === 'function') { callback(null, body); }
                     } catch (err) {
                         if (typeof callback === 'function') { callback(err); }
