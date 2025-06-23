@@ -26,8 +26,7 @@ boston.on('error', function(err) {
     console.log('ERROR with Boston weather lookup: ' + err);
 });
 
-//var AccuWeather_Key = '0123456789abcdef9876543210fedcba'; //this is a fake key
-var AccuWeather_Key = 'xA84Kwql8VY44jdfmrqnbrWOToU2hb3W';
+var AccuWeather_Key = '0123456789abcdef9876543210fedcba'; //this is a fake key
 
 var houston = new Weather.service({
     provider: 'accuweather',
