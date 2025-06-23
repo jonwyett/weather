@@ -11,11 +11,25 @@
     "url": "git+https://github.com/jonwyett/weather.git"
   },
   "keywords": [
-    "Weather",
+    "weather",
+    "forecast",
+    "api",
+    "weather-api",
+    "api-client",
+    "api-wrapper",
     "DarkSky",
     "AccuWeather",
     "OpenWeatherMap",
-    "Forecast"
+    "WeatherBit",
+    "current-conditions",
+    "temperature",
+    "humidity",
+    "sunrise",
+    "sunset",
+    "geoposition",
+    "latitude",
+    "longitude",
+    "standardized"
   ],
   "author": "Jonathan Wyett",
   "license": "ISC",
