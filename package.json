@@ -1,6 +1,6 @@
 {
   "name": "jw-weather",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "Reader for various weather APIs",
   "main": "weather.js",
   "scripts": {
@@ -24,6 +24,6 @@
   },
   "homepage": "https://github.com/jonwyett/weather#readme",
   "dependencies": {
-    "jw-gate": "^1.0.0"
+    
   }
 }
