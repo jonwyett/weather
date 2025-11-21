@@ -1,3 +1,6 @@
 __snapshots__/
 snapshot.exe
 .vscode/
+.snapshotignore
+.gitignore
+
