@@ -100,7 +100,7 @@ Each forecast day includes:
 Fetches the latest weather data from your configured provider.
 
 ```javascript
-// Using async/await (recommended)
+// Using async/await 
 try {
     await boston.update();
     console.log('Weather updated successfully');
@@ -108,7 +108,16 @@ try {
     console.error('Update failed:', error);
 }
 
-// Using callback
+// Using Promises
+boston.update()
+    .then(() => {
+        console.log('Weather updated successfully');
+    })
+    .catch((error) => {
+        console.error('Update failed:', error);
+    });
+
+// Using callback 
 boston.update((error) => {
     if (error) {
         console.error('Update failed:', error);

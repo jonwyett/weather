@@ -1,5 +1,5 @@
 /*
-ver 2.1.3 
+ver 2.1.4 
     - Refactored to use async/await and Promises, removing callback complexity.
     - Replaced custom emitter with Node.js's built-in EventEmitter.
     - Centralized provider configurations for improved maintainability.
